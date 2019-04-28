@@ -9,11 +9,13 @@ import sys
 import argparse
 import random
 
-MAX_HARD_NEGATIVES = 20000
+MAX_HARD_NEGATIVES = 2000
 
 parser = argparse.ArgumentParser(description='Parse Training Directory')
-parser.add_argument('--pos', help='Path to directory containing Positive Images')
-parser.add_argument('--neg', help='Path to directory containing Negative images')
+parser.add_argument(
+    '--pos', help='Path to directory containing Positive Images')
+parser.add_argument(
+    '--neg', help='Path to directory containing Negative images')
 
 args = parser.parse_args()
 pos_img_dir = args.pos
@@ -21,6 +23,9 @@ neg_img_dir = args.neg
 
 
 def crop_centre(img):
+    """ Crop (96, 160, 3) images to (64, 128, 3).
+    However, in cv2, it is (height, width, 3).
+    """
     h, w, _ = img.shape
     l = (w - 64)/2
     t = (h - 128)/2
@@ -28,17 +33,18 @@ def crop_centre(img):
     crop = img[t:t+128, l:l+64]
     return crop
 
+
 def ten_random_windows(img):
     h, w = img.shape
     if h < 128 or w < 64:
         return []
 
-    h = h - 128;
+    h = h - 128
     w = w - 64
 
     windows = []
 
-    for i in range(0, 10):
+    for i in range(0, 10):  # However, do we need ten window for each negative image?
         x = random.randint(0, w)
         y = random.randint(0, h)
         windows.append(img[y:y+128, x:x+64])
@@ -74,16 +80,17 @@ def read_images(pos_files, neg_files):
     for img_file in pos_files:
         print os.path.join(pos_img_dir, img_file)
         img = cv2.imread(os.path.join(pos_img_dir, img_file))
+        # img.shape -> (160, 96, 3)
 
         cropped = crop_centre(img)
 
         gray = cv2.cvtColor(cropped, cv2.COLOR_BGR2GRAY)
-        features = hog(gray, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
+        features = hog(gray, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(
+            2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)  # (3780, )
         pos_count += 1
 
         X.append(features)
         Y.append(1)
-
 
     neg_count = 0
 
@@ -94,11 +101,11 @@ def read_images(pos_files, neg_files):
         windows = ten_random_windows(gray_img)
 
         for win in windows:
-            features = hog(win, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
+            features = hog(win, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(
+                2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
             neg_count += 1
             X.append(features)
             Y.append(0)
-
 
     return X, Y, pos_count, neg_count
 
@@ -137,7 +144,8 @@ def hard_negative_mine(f_neg, winSize, winStride):
         img = cv2.imread(os.path.join(neg_img_dir, imgfile))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         for (x, y, im_window) in sliding_window(gray, winSize, winStride):
-            features = hog(im_window, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
+            features = hog(im_window, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(
+                2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
             if (clf1.predict([features]) == 1):
                 hard_negatives.append(features)
                 hard_negative_labels.append(0)
@@ -149,13 +157,12 @@ def hard_negative_mine(f_neg, winSize, winStride):
 
         num = num + 1
 
-        sys.stdout.write("\r" + "\tHard Negatives Mined: " + str(count) + "\tCompleted: " + str(round((count / float(MAX_HARD_NEGATIVES))*100, 4)) + " %" )
+        sys.stdout.write("\r" + "\tHard Negatives Mined: " + str(count) + "\tCompleted: " +
+                         str(round((count / float(MAX_HARD_NEGATIVES))*100, 4)) + " %")
 
         sys.stdout.flush()
 
     return np.array(hard_negatives), np.array(hard_negative_labels)
-
-
 
 
 pos_img_files, neg_img_files = read_filenames()
@@ -177,7 +184,7 @@ print "Positives: " + str(pos_count)
 print "Negatives: " + str(neg_count)
 print "Training Started"
 
-clf1 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose = 1)
+clf1 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose=1)
 
 
 clf1.fit(X, Y)
@@ -194,19 +201,21 @@ winSize = (64, 128)
 
 print ("Maximum Hard Negatives to Mine: " + str(MAX_HARD_NEGATIVES))
 
-hard_negatives, hard_negative_labels = hard_negative_mine(neg_img_files, winSize, winStride)
+hard_negatives, hard_negative_labels = hard_negative_mine(
+    neg_img_files, winSize, winStride)
 
 sys.stdout.write("\n")
 
-hard_negatives = np.concatenate((hard_negatives, X), axis = 0)
-hard_negative_labels = np.concatenate((hard_negative_labels, Y), axis = 0)
+hard_negatives = np.concatenate((hard_negatives, X), axis=0)
+hard_negative_labels = np.concatenate((hard_negative_labels, Y), axis=0)
 
-hard_negatives, hard_negative_labels = shuffle(hard_negatives, hard_negative_labels, random_state=0)
+hard_negatives, hard_negative_labels = shuffle(
+    hard_negatives, hard_negative_labels, random_state=0)
 
 print "Final Samples Dims: " + str(hard_negatives.shape)
 print "Retraining the classifier with final data"
 
-clf2 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose = 1)
+clf2 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose=1)
 
 clf2.fit(hard_negatives, hard_negative_labels)
 
