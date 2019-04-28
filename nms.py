@@ -58,13 +58,14 @@ def nms(detections, threshold=.5):
     # detection to `new_detections`.
     # In either case, remove the detection from `detections` list.
     for index, detection in enumerate(detections):
+        flag = True
         for new_detection in new_detections:
             if overlapping_area(detection, new_detection) > threshold:
-                del detections[index]
+                flag = False
                 break
-        else:
+        if (flag):
             new_detections.append(detection)
-            del detections[index]
+
     return new_detections
 
 

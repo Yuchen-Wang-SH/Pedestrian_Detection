@@ -30,8 +30,8 @@ parser.add_argument('-n', '--nms_threshold',
 args = vars(parser.parse_args())
 
 
-# clf = joblib.load("person_final.pkl")
-clf = joblib.load("person_pre-eliminary.pkl")
+clf = joblib.load("person_final.pkl")
+# clf = joblib.load("person_pre-eliminary.pkl")
 
 
 orig = cv2.imread(args["image"])
@@ -65,8 +65,8 @@ while (h >= 128 and w >= 64):
         while j < horiz:
 
             portion = gray[i:i+winSize[0], j:j+winSize[1]]
-            features = hog(portion, orientations=9, pixels_per_cell=(
-                8, 8), cells_per_block=(2, 2), block_norm="L2")
+            features = hog(portion, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(
+                2, 2), block_norm="L2", transform_sqrt=True, feature_vector=True)
 
             result = clf.predict([features])
 
