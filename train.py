@@ -11,6 +11,9 @@ import random
 
 MAX_HARD_NEGATIVES = 2000
 
+RANDOM_SEED = 42
+random.seed(RANDOM_SEED)
+
 parser = argparse.ArgumentParser(description='Parse Training Directory')
 parser.add_argument(
     '--pos', help='Path to directory containing Positive Images')
@@ -176,7 +179,7 @@ X, Y, pos_count, neg_count = read_images(pos_img_files, neg_img_files)
 X = np.array(X)
 Y = np.array(Y)
 
-X, Y = shuffle(X, Y, random_state=0)
+X, Y = shuffle(X, Y, random_state=RANDOM_SEED)
 
 
 print "Images Read and Shuffled"
@@ -184,7 +187,8 @@ print "Positives: " + str(pos_count)
 print "Negatives: " + str(neg_count)
 print "Training Started"
 
-clf1 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose=1)
+clf1 = svm.LinearSVC(C=0.01, max_iter=1000,
+                     class_weight='balanced', verbose=1, random_state=RANDOM_SEED)
 
 
 clf1.fit(X, Y)
@@ -210,7 +214,7 @@ hard_negatives = np.concatenate((hard_negatives, X), axis=0)
 hard_negative_labels = np.concatenate((hard_negative_labels, Y), axis=0)
 
 hard_negatives, hard_negative_labels = shuffle(
-    hard_negatives, hard_negative_labels, random_state=0)
+    hard_negatives, hard_negative_labels, random_state=RANDOM_SEED)
 
 print "Final Samples Dims: " + str(hard_negatives.shape)
 print "Retraining the classifier with final data"
