@@ -1,5 +1,6 @@
 import cv2
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 import os
 import numpy as np
 from sklearn.externals import joblib
@@ -8,8 +9,9 @@ from sklearn.utils import shuffle
 import sys
 import argparse
 import random
+import pickle
 
-MAX_HARD_NEGATIVES = 2000
+MAX_HARD_NEGATIVES = 5
 
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
@@ -19,10 +21,12 @@ parser.add_argument(
     '--pos', help='Path to directory containing Positive Images')
 parser.add_argument(
     '--neg', help='Path to directory containing Negative images')
+parser.add_argument('--clf', help='svm or rf')
 
 args = parser.parse_args()
 pos_img_dir = args.pos
 neg_img_dir = args.neg
+clf_type = args.clf
 
 
 def crop_centre(img):
@@ -74,6 +78,18 @@ def read_filenames():
 
 
 def read_images(pos_files, neg_files):
+    file_X = './data/X.pkl'
+    file_Y = './data/Y.pkl'
+
+    if (os.path.exists(file_X) and os.path.exists(file_Y)):
+        print "Loading from disk..."
+        f = open(file_X, 'r')
+        X = pickle.load(f)
+        f.close()
+        f = open(file_Y, 'r')
+        Y = pickle.load(f)
+        f.close()
+        return X, Y, 2416, 12180
 
     X = []
     Y = []
@@ -109,7 +125,12 @@ def read_images(pos_files, neg_files):
             neg_count += 1
             X.append(features)
             Y.append(0)
-
+    f = open(file_X, 'w')
+    pickle.dump(X, f)
+    f.close()
+    f = open(file_Y, 'w')
+    pickle.dump(Y, f)
+    f.close()
     return X, Y, pos_count, neg_count
 
 
@@ -187,8 +208,14 @@ print "Positives: " + str(pos_count)
 print "Negatives: " + str(neg_count)
 print "Training Started"
 
-clf1 = svm.LinearSVC(C=0.01, max_iter=1000,
-                     class_weight='balanced', verbose=1, random_state=RANDOM_SEED)
+if clf_type == 'svm':
+    clf1 = svm.LinearSVC(C=0.01, max_iter=1000,
+                         class_weight='balanced', verbose=1, random_state=RANDOM_SEED)
+elif clf_type == 'rf':
+    clf1 = RandomForestClassifier(
+        n_estimators=10, random_state=RANDOM_SEED)
+else:
+    raise AttributeError()
 
 
 clf1.fit(X, Y)
@@ -219,7 +246,14 @@ hard_negatives, hard_negative_labels = shuffle(
 print "Final Samples Dims: " + str(hard_negatives.shape)
 print "Retraining the classifier with final data"
 
-clf2 = svm.LinearSVC(C=0.01, max_iter=1000, class_weight='balanced', verbose=1)
+if clf_type == 'svm':
+    clf2 = svm.LinearSVC(C=0.01, max_iter=1000,
+                         class_weight='balanced', verbose=1, random_state=RANDOM_SEED)
+elif clf_type == 'rf':
+    clf2 = RandomForestClassifier(
+        n_estimators=10, random_state=RANDOM_SEED)
+else:
+    raise AttributeError()
 
 clf2.fit(hard_negatives, hard_negative_labels)
 

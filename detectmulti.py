@@ -79,7 +79,10 @@ while (h >= 128 and w >= 64):
 
             if int(result[0]) == 1:
                 print (result, i, j)
-                confidence = clf.decision_function([features])
+                try:
+                    confidence = clf.decision_function([features])
+                except:
+                    confidence = 1
                 appendRects(i, j, confidence, count, rects)
 
             j = j + winStride[0]
