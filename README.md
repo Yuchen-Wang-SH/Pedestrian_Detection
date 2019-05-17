@@ -44,6 +44,8 @@ python train.py --pos <path to positive images> --neg <path to negative images>
 For INRIA dataset, this would be probably,
 ```
 python train.py --pos INRIAPerson/train_64x128_H96/pos --neg INRIAPerson/train_64x128_H96/neg
+
+python train.py --pos INRIAPerson/96X160H96/Train/pos --neg INRIAPerson/Train/neg --clf svm
 ```
 
 After training, two new files would be created, namely, `person.pkl` and `person_final.pkl`. The former is the pre eliminary detector and the latter is the improved (hard negatively mined) detector.
@@ -60,6 +62,8 @@ python test.py --pos <path to positive images> --neg <path to negative images>
 For INRIA dataset, this would be probably,
 ```
 python test.py --pos INRIAPerson/test_64x128_H96/pos --neg INRIAPerson/test_64x128_H96/neg
+
+python test.py --pos INRIAPerson/70X134H96/Test/pos --neg INRIAPerson/Test/neg
 ```
 
 This would print `True Positives`, `True Negatives`, `False Positives`, `False Negatives`, `Precision`, `Recall` and `F1 Score`.

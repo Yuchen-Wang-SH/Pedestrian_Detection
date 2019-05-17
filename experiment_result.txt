@@ -1,0 +1,17 @@
+// Default model.
+Positive Image Samples: 1132
+Negative Image Samples: 453
+Reading Images
+('True Positives: 1004', 'False Positives: 1')
+('True Negatives: 452', 'False Negatives: 128')
+('Precision: 0.999004975124', 'Recall: 0.886925795053')
+F1 Score: 0.93963500234
+
+// No negative mining.
+Positive Image Samples: 1132
+Negative Image Samples: 453
+Reading Images
+('True Positives: 1097', 'False Positives: 8')
+('True Negatives: 445', 'False Negatives: 35')
+('Precision: 0.992760180995', 'Recall: 0.969081272085')
+F1 Score: 0.980777827447

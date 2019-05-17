@@ -31,6 +31,7 @@ args = vars(parser.parse_args())
 
 
 clf = joblib.load("person_final.pkl")
+# clf = joblib.load("person_final_no_mining.pkl")
 # clf = joblib.load("person_pre-eliminary.pkl")
 
 
@@ -73,7 +74,7 @@ while (h >= 128 and w >= 64):
             if args["visualize"]:
                 visual = gray.copy()
                 cv2.rectangle(visual, (j, i),
-                              (j+winSize[1], i+winSize[0]), (0, 0, 255), 2)
+                              (j+winSize[1], i+winSize[0]), (255, 255, 255), 2)
                 cv2.imshow("visual", visual)
                 cv2.waitKey(1)
 

@@ -11,7 +11,7 @@ import argparse
 import random
 import pickle
 
-MAX_HARD_NEGATIVES = 5
+MAX_HARD_NEGATIVES = 1
 
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
